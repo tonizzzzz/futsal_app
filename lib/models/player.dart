@@ -42,7 +42,9 @@ class Player {
       'name': name,
       'position': position,
       'image_url': imageUrl,
-      'rating': rating,
+      'rating':
+          rating
+              .toString(), // ✅ Convertimos `rating` a `String` si lo vamos a enviar
     };
   }
 }

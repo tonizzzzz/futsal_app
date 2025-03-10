@@ -1,21 +1,39 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/game.dart';
+import '../services/token_service.dart';
 
 class GameRepository {
   final String baseUrl = 'http://futsal.api/api';
 
-  Future<List<Game>> getGamesWithPlayers(String token, int page) async {
+  Future<List<Game>> getGames() async {
+    final token = await TokenService.getToken();
+
+    if (token == null || token.isEmpty) {
+      throw Exception("Token de autenticación no encontrado.");
+    }
+
     final response = await http.get(
-      Uri.parse('$baseUrl/games-with-players?page=$page'),
+      Uri.parse('$baseUrl/games'),
       headers: {'Authorization': 'Bearer $token', 'Accept': 'application/json'},
     );
 
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-      List<dynamic> gameList = data['data'];
+    print(
+      '📡 Respuesta de la API (Código ${response.statusCode}): ${response.body}',
+    );
 
-      return gameList.map((game) => Game.fromJson(game)).toList();
+    if (response.statusCode == 200) {
+      try {
+        final List<dynamic> gameList = json.decode(response.body);
+        if (gameList.isNotEmpty) {
+          print('🔍 Ejemplo de partido recibido: ${gameList.first}');
+        }
+
+        return gameList.map((game) => Game.fromJson(game)).toList();
+      } catch (e) {
+        print('❌ Error procesando JSON: $e');
+        throw Exception('Error al procesar los datos de la API.');
+      }
     } else {
       throw Exception('Error obteniendo los partidos: ${response.body}');
     }

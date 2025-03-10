@@ -1,10 +1,9 @@
-// lib/pages/home_page.dart
 import 'package:flutter/material.dart';
 import 'package:futsal/pages/games_page.dart';
+import 'package:futsal/pages/players_page.dart';
+import 'package:futsal/pages/calendar_page.dart';
 import '../services/token_service.dart';
 import 'login_page.dart';
-import 'players_page.dart';
-import 'calendar_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -14,6 +13,7 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   String? username;
   bool isLoading = true;
 
@@ -25,14 +25,10 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _loadUsername() async {
     final user = await TokenService.getUsername();
-    final role = await TokenService.getRole();
-    final token = await TokenService.getToken();
     setState(() {
       username = user;
       isLoading = false;
     });
-
-    print('Usuario actual: $username ($role) - $token');
   }
 
   Future<void> _logout() async {
@@ -46,16 +42,16 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      key: _scaffoldKey, // 🔹 Agregamos la key del Scaffold
       appBar: AppBar(
         title: Text(username != null ? 'Bienvenido, $username' : 'Futsal App'),
-        actions: [
-          if (username != null)
-            IconButton(
-              onPressed: _logout,
-              icon: const Icon(Icons.logout),
-              tooltip: 'Cerrar sesión',
-            ),
-        ],
+        leading: IconButton(
+          icon: const Icon(Icons.menu),
+          onPressed:
+              () =>
+                  _scaffoldKey.currentState
+                      ?.openDrawer(), // 🔹 Abre el Drawer correctamente
+        ),
       ),
       drawer: _buildDrawer(),
       body:
@@ -84,49 +80,52 @@ class _HomePageState extends State<HomePage> {
               child: Icon(Icons.person, size: 40),
             ),
           ),
-          ListTile(
-            leading: const Icon(Icons.home),
-            title: const Text('Inicio'),
-            onTap: () {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (_) => const HomePage()),
-              );
-            },
-          ),
-          if (username != null) // Solo mostrar si está logueado
-            ListTile(
-              leading: const Icon(Icons.group),
-              title: const Text('Fichas de Jugadores'),
-              onTap: () async {
-                final token = await TokenService.getToken();
-                if (token != null && token.isNotEmpty) {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => PlayersPage(token: token),
-                    ),
-                  );
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Token de autenticación no encontrado.'),
-                    ),
-                  );
-                }
-              },
-            ),
-          ListTile(
+          ExpansionTile(
             leading: const Icon(Icons.sports_soccer),
             title: const Text('Partidos'),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const GamesPage()),
-              );
-            },
+            children: [
+              ListTile(
+                leading: const Icon(Icons.list),
+                title: const Text('Ver Partidos'),
+                onTap: () async {
+                  final token = await TokenService.getToken();
+                  if (token != null && token.isNotEmpty) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => GamesPage(token: token),
+                      ),
+                    );
+                  } else {
+                    _showSnackBar('Token de autenticación no encontrado.');
+                  }
+                },
+              ),
+            ],
           ),
-
+          ExpansionTile(
+            leading: const Icon(Icons.group),
+            title: const Text('Jugadores'),
+            children: [
+              ListTile(
+                leading: const Icon(Icons.list),
+                title: const Text('Lista de Jugadores'),
+                onTap: () async {
+                  final token = await TokenService.getToken();
+                  if (token != null && token.isNotEmpty) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => PlayersPage(token: token),
+                      ),
+                    );
+                  } else {
+                    _showSnackBar('Token de autenticación no encontrado.');
+                  }
+                },
+              ),
+            ],
+          ),
           ListTile(
             leading: const Icon(Icons.calendar_today),
             title: const Text('Calendario de Partidos'),
@@ -138,7 +137,7 @@ class _HomePageState extends State<HomePage> {
             },
           ),
           const Divider(),
-          if (username != null) // Solo mostrar si está logueado
+          if (username != null)
             ListTile(
               leading: const Icon(Icons.logout, color: Colors.red),
               title: const Text('Cerrar Sesión'),
@@ -147,5 +146,11 @@ class _HomePageState extends State<HomePage> {
         ],
       ),
     );
+  }
+
+  void _showSnackBar(String message) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 }

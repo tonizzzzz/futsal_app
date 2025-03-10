@@ -23,7 +23,8 @@ class TokenService {
 
   static Future<String?> getToken() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_tokenKey);
+    final token = prefs.getString(_tokenKey);
+    return token ?? ''; // 🔹 Si es `null`, devolver `''`
   }
 
   static Future<String?> getRole() async {

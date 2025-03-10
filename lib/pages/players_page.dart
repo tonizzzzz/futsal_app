@@ -41,16 +41,14 @@ class _PlayersPageState extends State<PlayersPage> {
   Future<void> _navigateToCreatePlayerPage() async {
     final bool? playerCreated = await Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => const PlayerCreatePage(),
-      ),
+      MaterialPageRoute(builder: (context) => const PlayerCreatePage()),
     );
 
     if (playerCreated == true) {
       _playerBloc.add(FetchPlayers(token: widget.token));
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Jugador creado con éxito')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Jugador creado con éxito')));
     }
   }
 
@@ -83,17 +81,20 @@ class _PlayersPageState extends State<PlayersPage> {
                     leading: CircleAvatar(
                       radius: 30,
                       child: ClipOval(
-                        child: player.imageUrl.isNotEmpty
-                            ? Image.network(
-                                player.imageUrl,
-                                width: 60,
-                                height: 60,
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) {
-                                  return const Icon(Icons.image_not_supported);
-                                },
-                              )
-                            : const Icon(Icons.image_not_supported),
+                        child:
+                            player.imageUrl.isNotEmpty
+                                ? Image.network(
+                                  player.imageUrl,
+                                  width: 60,
+                                  height: 60,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return const Icon(
+                                      Icons.image_not_supported,
+                                    );
+                                  },
+                                )
+                                : const Icon(Icons.image_not_supported),
                       ),
                     ),
                     title: Text(player.name),
